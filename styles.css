@@ -1,0 +1,17 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+#app{
+    height: 60vh;
+    width: 100%;
+    margin-top: 200px;
+    border: solid 2px black;
+    border-radius: 10px;
+}
+.container {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 10px;
+  }
