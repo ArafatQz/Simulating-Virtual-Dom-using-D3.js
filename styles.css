@@ -1,17 +1,50 @@
-*{
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
     margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-#app{
-    height: 60vh;
-    width: 100%;
-    margin-top: 200px;
-    border: solid 2px black;
+    padding: 20px;
+    display: flex;
+    justify-content: space-around;
+  }
+  .container {
+    background: white;
     border-radius: 10px;
-}
-.container {
-    border: 1px solid #ccc;
-    padding: 10px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
     margin: 10px;
+    width: 45%;
+  }
+  .node circle {
+    cursor: pointer;
+    stroke: #3182bd;
+    stroke-width: 2px;
+  }
+  .node text {
+    font: 12px sans-serif;
+    pointer-events: none;
+  }
+  .link {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 1.5px;
+  }
+  .node.collapsed circle {
+    fill: #ff7f0e;
+  }
+  .fade-in {
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: fadeIn 0.3s forwards;
+  }
+  @keyframes fadeIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-out {
+    animation: fadeOut 0.3s forwards;
+  }
+  @keyframes fadeOut {
+    to { opacity: 0; transform: translateY(10px); }
+  }
+  .selected {
+    background-color: #d1e7dd;
   }
