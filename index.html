@@ -2,10 +2,10 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Interactive Virtual DOM Todo List</title>
+  <title>Interactive Virtual DOM Todo List with Sub-Tasks</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link href="styles.css" rel="stylesheet">
 </head>
 <body>
   <!-- Todo List Container -->
@@ -14,6 +14,7 @@
     <div class="input-group mb-3">
       <input type="text" id="taskInput" class="form-control" placeholder="Enter task">
       <button class="btn btn-primary" onclick="addTask()">Add Task</button>
+      <button class="btn btn-info text-white" onclick="addSubTask()">Add Sub-Task</button>
     </div>
     <div id="app" class="list-group"></div>
   </div>
@@ -23,8 +24,6 @@
     <h2 class="text-center mb-4">Virtual DOM Tree</h2>
     <div id="chart"></div>
   </div>
-
-  <script src="main.js">
-  </script>
+  <script src="main.js"></script>
 </body>
 </html>
