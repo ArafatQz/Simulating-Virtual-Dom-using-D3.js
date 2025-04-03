@@ -15,10 +15,7 @@ const vDOM = {
 
 // Helper to create a new node
 const createNode = (type, attributes = {}, children = [], text = '') => {
-  // If children exist, ignore text to avoid mixing.
-  if (children.length > 0) {
-    text = '';
-  }
+
   return {
     id: `node-${++idCounter}`,
     type,
@@ -29,17 +26,12 @@ const createNode = (type, attributes = {}, children = [], text = '') => {
 };
 
 const clone = obj => {
-  // Handle null or non-object types.
-  if (obj === null || typeof obj !== 'object') return obj;
-
-  // Handle Date.
-  if (obj instanceof Date) return new Date(obj);
-
-  // Handle Array.
-  if (Array.isArray(obj)) return obj.map(item => clone(item));
-
-  // Handle Object.
-  if (obj instanceof Object) {
+  // Handle Arrays.
+  if (Array.isArray(obj)) {
+    return obj.map(item => clone(item));
+  }
+  // Handle Objects.
+  else if (obj instanceof Object) {
     const copy = {};
     for (let key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -48,9 +40,10 @@ const clone = obj => {
     }
     return copy;
   }
-
-  // If the object type is not supported, return it as is.
-  return obj;
+  // Handle Primitives.
+  else {
+    return obj;
+  }
 };
 
 
@@ -73,17 +66,17 @@ const findNodeById = (node, id) => {
 // Diffing Algorithm Implementation
 // ==============================
 
-// Modified diff function now accepts an optional parentId.
+
 const diff = (oldNode, newNode, parentId = null) => {
   let patches = [];
 
-  // Case 1: new node does not exist => remove old node.
+  // Case 1: node in new vDom does not exist => remove old node.
   if (!newNode) {
     patches.push({ type: 'REMOVE', id: oldNode.id });
     return patches;
   }
 
-  // Case 2: old node does not exist => add new node.
+  // Case 2: node in new vDom exists => add new node.
   if (!oldNode) {
     patches.push({ type: 'ADD', node: newNode, parentId });
     return patches;
@@ -131,14 +124,13 @@ const diffAttributes = (oldAttrs = {}, newAttrs = {}) => {
   return patches;
 };
 
-// Diff children arrays using keys (node.id) for matching.
 const diffChildren = (oldChildren = [], newChildren = [], parentId) => {
   let patches = [];
   const oldMap = {};
   oldChildren.forEach(child => { oldMap[child.id] = child; });
   const newMap = {};
   newChildren.forEach(child => { newMap[child.id] = child; });
-
+ 
   // Diff or add new children.
   newChildren.forEach(child => {
     if (oldMap[child.id]) {
@@ -197,6 +189,7 @@ const applyPatches = patches => {
       }
       case 'ATTRS': {
          const elem = d3.select(`#${patch.id}`);
+         console.log(Object.entries(patch.attrs))
          Object.entries(patch.attrs).forEach(([key, value]) => {
            if(key === 'class') {
              // Instead of merging, reset the class and ensure fade-in is added once.
@@ -216,8 +209,17 @@ const applyPatches = patches => {
          break;
       }
       case 'TEXT': {
-         d3.select(`#${patch.id}`).text(patch.text);
-         break;
+        const elem = d3.select(`#${patch.id}`);
+        // Only update the text node, not the entire content
+        const textNode = elem.select('text-node');
+        if (textNode.empty()) {
+          elem.insert('text', ':first-child')
+            .attr('id', `${patch.id}-text`)
+            .text(patch.text);
+        } else {
+          textNode.text(patch.text);
+        }
+        break;
       }
     }
   });
@@ -227,7 +229,6 @@ const applyPatches = patches => {
 // DOM Rendering (List) using D3
 // ==============================
 const appContainer = d3.select('#app');
-// Instead of keeping a stale reference, we now track the selected node by its id.
 let selectedNodeId = null;
 
 const renderDOM = (node, parent) => {
@@ -255,7 +256,7 @@ const renderDOM = (node, parent) => {
       }
   });
   
-  // For list items add Edit and Remove buttons, but avoid duplicate buttons.
+  // For list items add Edit and Remove buttons
   if (node.type === 'li') {
     if (element.select('button.edit').empty()) {
       element.append('button')
@@ -269,6 +270,7 @@ const renderDOM = (node, parent) => {
             editTask(node.id);
           }
         });
+        
     }
     if (element.select('button.remove').empty()) {
       element.append('button')
@@ -417,6 +419,7 @@ const removeTask = id => {
 const refreshDOM = () => {
   const patches = diff(prevVDOM, vDOM);
   applyPatches(patches);
+  // console.log(patches[0])
   updateTree();
   // Update prevVDOM to the current state.
   prevVDOM = clone(vDOM);
@@ -425,6 +428,6 @@ const refreshDOM = () => {
 // ==============================
 // Initialization
 // ==============================
-appContainer.selectAll('*').remove();
+// appContainer.selectAll('*').remove();
 renderDOM(vDOM, appContainer);
 updateTree();
