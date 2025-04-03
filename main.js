@@ -45,7 +45,6 @@ const clone = obj => {
   }
 };
 
-
 // Global previous state of the Virtual DOM for diffing
 let prevVDOM = clone(vDOM);
 
@@ -64,8 +63,6 @@ const findNodeById = (node, id) => {
 // ==============================
 // Diffing Algorithm Implementation
 // ==============================
-
-
 const diff = (oldNode, newNode, parentId = null) => {
   let patches = [];
 
@@ -299,6 +296,9 @@ const updateTree = () => {
   const root = d3.hierarchy(vDOM, d => d.collapsed ? [] : d.children);
   treeLayout(root);
 
+  // ------------------------------
+  // Nodes Section
+  // ------------------------------
   const nodes = svg.selectAll(".node")
     .data(root.descendants(), d => d.data.id);
 
@@ -318,21 +318,21 @@ const updateTree = () => {
 
   enterNodes.append("circle")
     .attr("r", 10)
-    .style("fill", d => d.data.collapsed ? "#ff7f0e" : "#fff")
+    .style("fill", d => d.data.collapsed ? "#ff7f0e" : "#ffff")
     .style("stroke", "#3182bd");
 
-    enterNodes.append("text")
+  enterNodes.append("text")
     .attr("dy", "0.31em")
     .attr("x", d => d.children ? -13 : 13)
     .style("text-anchor", d => d.children ? "end" : "start")
     .text(d => d.data.text || `Node ${d.data.id}`);
 
   const mergedNodes = nodes.merge(enterNodes);
-  
-  
-  // Add text update to existing nodes
+
+  // Update text for existing nodes
   mergedNodes.select("text")
-    .text(d => d.data.text || `Node ${d.data.id}`); // Add this line
+    .text(d => d.data.text || `Node ${d.data.id}`);
+
   mergedNodes.transition().duration(500)
     .attr("transform", d => `translate(${d.y},${d.x})`);
 
@@ -340,19 +340,31 @@ const updateTree = () => {
     .transition().duration(500)
     .style("fill", d => d.data.collapsed ? "#ff7f0e" : "#fff");
 
+  // ------------------------------
+  // Links Section with Animation
+  // ------------------------------
   const links = svg.selectAll(".link")
     .data(root.links(), d => `${d.source.data.id}-${d.target.data.id}`);
 
   links.exit().remove();
 
-  links.enter()
+  const enterLinks = links.enter()
     .append("path")
     .attr("class", "link")
     .attr("d", d3.linkHorizontal()
       .x(d => d.y)
       .y(d => d.x))
-    .merge(links)
-    .transition().duration(500)
+    .each(function() {
+      // Get the total length of the path for the animation.
+      const totalLength = this.getTotalLength();
+      d3.select(this)
+        .attr("stroke-dasharray", totalLength + " " + totalLength)
+        .attr("stroke-dashoffset", totalLength);
+    });
+
+  enterLinks.merge(links)
+    .transition().duration(1000)
+    .attr("stroke-dashoffset", 0) // Animate the dash offset to 0.
     .attr("d", d3.linkHorizontal()
       .x(d => d.y)
       .y(d => d.x));
@@ -382,12 +394,12 @@ document.addEventListener('contextmenu', (e) => {
 
 function handleEdit() {
   if (!selectedNodeId) return;
-  const node = findNodeById(vDOM, selectedNodeId); // Add this line
-  const newText = prompt('Edit text:', node.text); // Change id to selectedNodeId
+  const node = findNodeById(vDOM, selectedNodeId);
+  const newText = prompt('Edit text:', node.text);
   if (newText === null) return;
 
   prevVDOM = clone(vDOM);
-  node.text = newText.trim(); // Update directly on the found node
+  node.text = newText.trim();
   refreshDOM();
   hideContextMenu();
 }
@@ -429,6 +441,7 @@ function handleToggle() {
   refreshDOM();
   hideContextMenu();
 }
+
 // ==============================
 // Todo List Functions
 // ==============================
@@ -470,12 +483,12 @@ const editTask = id => {
   prevVDOM = clone(vDOM);
   const node = findNodeById(vDOM, id);
   if (node) {
-    node.text = newText.trim(); // Only update the target node
+    node.text = newText.trim();
   }
   refreshDOM();
 };
+
 const removeTask = id => {
-  // Clone before mutation.
   prevVDOM = clone(vDOM);
   const removeNode = node => {
     node.children = node.children.filter(child => {
@@ -493,7 +506,6 @@ const removeTask = id => {
 const refreshDOM = () => {
   const patches = diff(prevVDOM, vDOM);
   applyPatches(patches);
-  // console.log(patches[0])
   updateTree();
   // Update prevVDOM to the current state.
   prevVDOM = clone(vDOM);
@@ -502,6 +514,6 @@ const refreshDOM = () => {
 // ==============================
 // Initialization
 // ==============================
-// appContainer.selectAll('*').remove();
+// Render the initial list and tree.
 renderDOM(vDOM, appContainer);
 updateTree();

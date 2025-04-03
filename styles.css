@@ -70,3 +70,9 @@ body {
     background-color: #f8f9fa;
   }
   
+  .link {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 1.5px;
+    transition: stroke 0.3s ease, stroke-width 0.3s ease;
+  }
