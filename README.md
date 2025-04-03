@@ -101,7 +101,7 @@ Contributions are welcome! To contribute:
 3. Submit a PR with a detailed description.
 
 ## License 📄
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ---
 
