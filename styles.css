@@ -48,3 +48,25 @@ body {
   .selected {
     background-color: #d1e7dd;
   }
+
+  .context-menu {
+    position: absolute;
+    display: none;
+    background: white;
+    border: 1px solid #ccc;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    z-index: 1000;
+  }
+  .context-menu button {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+  }
+  .context-menu button:hover {
+    background-color: #f8f9fa;
+  }
+  

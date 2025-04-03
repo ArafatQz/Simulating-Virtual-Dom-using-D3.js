@@ -10,20 +10,19 @@ const vDOM = {
   id: 'root',
   attributes: { class: 'list-group' },
   children: [],
-  text: ''
+  text: '',
+  collapsed: false
 };
 
 // Helper to create a new node
-const createNode = (type, attributes = {}, children = [], text = '') => {
-
-  return {
-    id: `node-${++idCounter}`,
-    type,
-    attributes,
-    children,
-    text,
-  };
-};
+const createNode = (type, attributes = {}, children = [], text = '') => ({
+  id: `node-${++idCounter}`,
+  type,
+  attributes,
+  children,
+  text: text || '', 
+  collapsed: false
+});
 
 const clone = obj => {
   // Handle Arrays.
@@ -210,15 +209,7 @@ const applyPatches = patches => {
       }
       case 'TEXT': {
         const elem = d3.select(`#${patch.id}`);
-        // Only update the text node, not the entire content
-        const textNode = elem.select('text-node');
-        if (textNode.empty()) {
-          elem.insert('text', ':first-child')
-            .attr('id', `${patch.id}-text`)
-            .text(patch.text);
-        } else {
-          textNode.text(patch.text);
-        }
+        elem.text(patch.text || ''); // Directly update element text
         break;
       }
     }
@@ -235,7 +226,7 @@ const renderDOM = (node, parent) => {
   // Append the element and set its id and text.
   const element = parent.append(node.type)
     .attr('id', node.id)
-    .text(node.text)
+    .text(node.text || '')
     .on('click', event => {
       event.stopPropagation();
       selectedNodeId = node.id;
@@ -305,73 +296,139 @@ const svg = svgContainer.append("g")
 const treeLayout = d3.tree().size([height, width]);
 
 const updateTree = () => {
-  const root = d3.hierarchy(vDOM, d => d.children);
+  const root = d3.hierarchy(vDOM, d => d.collapsed ? [] : d.children);
   treeLayout(root);
 
-  // Process links
-  const links = svg.selectAll(".link")
-    .data(root.links(), d => `${d.source.id}-${d.target.id}`); // Unique key
-
-  links.exit()
-    .transition().duration(1000)
-    .style("opacity", 0)
-    .remove();
-
-  const enterLinks = links.enter()
-    .append("path")
-    .attr("class", "link")
-    .style("opacity", 0)
-    .attr("d", d3.linkHorizontal()
-      .x(d => d.y)
-      .y(d => d.x));
-
-  enterLinks.merge(links)
-    .transition().duration(1000)
-    .style("opacity", 1)
-    .attr("d", d3.linkHorizontal()
-      .x(d => d.y)
-      .y(d => d.x));
-
-  // Process nodes
   const nodes = svg.selectAll(".node")
-    .data(root.descendants(), d => d.id);
+    .data(root.descendants(), d => d.data.id);
 
-  nodes.exit()
-    .transition().duration(1000)
-    .style("opacity", 0)
-    .remove();
+  nodes.exit().remove();
 
   const enterNodes = nodes.enter()
     .append("g")
     .attr("class", "node")
     .attr("transform", d => `translate(${d.y},${d.x})`)
-    .style("opacity", 0);
+    .on('click', function(event, d) {
+      event.stopPropagation();
+      selectedNodeId = d.data.id;
+      showContextMenu(event);
+      d3.selectAll('.node.selected').classed('selected', false);
+      d3.select(this).classed('selected', true);
+    });
 
   enterNodes.append("circle")
-    .attr("r", 0)
-    .style("fill", d => d.data.collapsed ? "#ff7f0e" : "#fff");
+    .attr("r", 10)
+    .style("fill", d => d.data.collapsed ? "#ff7f0e" : "#fff")
+    .style("stroke", "#3182bd");
 
-  enterNodes.append("text")
+    enterNodes.append("text")
     .attr("dy", "0.31em")
     .attr("x", d => d.children ? -13 : 13)
     .style("text-anchor", d => d.children ? "end" : "start")
-    .text(d => `${d.data.type}: ${d.data.text}`);
+    .text(d => d.data.text || `Node ${d.data.id}`);
 
-  const mergedNodes = enterNodes.merge(nodes);
-
-  mergedNodes.transition().duration(1000)
-    .style("opacity", 1)
+  const mergedNodes = nodes.merge(enterNodes);
+  
+  
+  // Add text update to existing nodes
+  mergedNodes.select("text")
+    .text(d => d.data.text || `Node ${d.data.id}`); // Add this line
+  mergedNodes.transition().duration(500)
     .attr("transform", d => `translate(${d.y},${d.x})`);
 
   mergedNodes.select("circle")
-    .transition().duration(1000)
-    .attr("r", 10)
+    .transition().duration(500)
     .style("fill", d => d.data.collapsed ? "#ff7f0e" : "#fff");
 
-  mergedNodes.select("text")
-    .text(d => `${d.data.type}: ${d.data.text}`);
+  const links = svg.selectAll(".link")
+    .data(root.links(), d => `${d.source.data.id}-${d.target.data.id}`);
+
+  links.exit().remove();
+
+  links.enter()
+    .append("path")
+    .attr("class", "link")
+    .attr("d", d3.linkHorizontal()
+      .x(d => d.y)
+      .y(d => d.x))
+    .merge(links)
+    .transition().duration(500)
+    .attr("d", d3.linkHorizontal()
+      .x(d => d.y)
+      .y(d => d.x));
 };
 
+function showContextMenu(event) {
+  const menu = document.getElementById('contextMenu');
+  menu.style.display = 'block';
+  menu.style.left = `${event.pageX}px`;
+  menu.style.top = `${event.pageY}px`;
+  event.preventDefault();
+}
+
+function hideContextMenu() {
+  document.getElementById('contextMenu').style.display = 'none';
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#contextMenu') && !e.target.closest('.node')) {
+    hideContextMenu();
+  }
+});
+
+document.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+});
+
+function handleEdit() {
+  if (!selectedNodeId) return;
+  const node = findNodeById(vDOM, selectedNodeId); // Add this line
+  const newText = prompt('Edit text:', node.text); // Change id to selectedNodeId
+  if (newText === null) return;
+
+  prevVDOM = clone(vDOM);
+  node.text = newText.trim(); // Update directly on the found node
+  refreshDOM();
+  hideContextMenu();
+}
+
+function handleDelete() {
+  if (!selectedNodeId) return;
+  
+  prevVDOM = clone(vDOM);
+  const removeNode = (node) => {
+    node.children = node.children.filter(child => {
+      if (child.id === selectedNodeId) return false;
+      removeNode(child);
+      return true;
+    });
+  };
+  removeNode(vDOM);
+  refreshDOM();
+  hideContextMenu();
+}
+
+function handleCreateChild() {
+  if (!selectedNodeId) return;
+  const childText = prompt('Enter child node text:');
+  if (!childText) return;
+
+  prevVDOM = clone(vDOM);
+  const parent = findNodeById(vDOM, selectedNodeId);
+  const newChild = createNode('div', { class: 'list-group-item' }, [], childText.trim());
+  parent.children.push(newChild);
+  refreshDOM();
+  hideContextMenu();
+}
+
+function handleToggle() {
+  if (!selectedNodeId) return;
+  prevVDOM = clone(vDOM);
+  const node = findNodeById(vDOM, selectedNodeId);
+  node.collapsed = !node.collapsed;
+  refreshDOM();
+  hideContextMenu();
+}
 // ==============================
 // Todo List Functions
 // ==============================
@@ -408,18 +465,15 @@ const addSubTask = () => {
 
 const editTask = id => {
   const newText = prompt("Enter updated task text:");
-  if (newText === null) return; // Cancelled
+  if (newText === null) return;
   
-  // Clone before mutation.
   prevVDOM = clone(vDOM);
-  const updateText = node => {
-    if (node.id === id) node.text = newText.trim() || node.text;
-    node.children.forEach(updateText);
-  };
-  updateText(vDOM);
+  const node = findNodeById(vDOM, id);
+  if (node) {
+    node.text = newText.trim(); // Only update the target node
+  }
   refreshDOM();
 };
-
 const removeTask = id => {
   // Clone before mutation.
   prevVDOM = clone(vDOM);
