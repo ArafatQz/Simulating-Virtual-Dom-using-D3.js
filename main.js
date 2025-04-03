@@ -305,51 +305,71 @@ const svg = svgContainer.append("g")
 const treeLayout = d3.tree().size([height, width]);
 
 const updateTree = () => {
-  svg.selectAll("*").remove();
   const root = d3.hierarchy(vDOM, d => d.children);
   treeLayout(root);
-  
-  // Draw Links with Animation.
+
+  // Process links
   const links = svg.selectAll(".link")
-    .data(root.links())
-    .enter().append("path")
-      .attr("class", "link")
-      .attr("d", d3.linkHorizontal().x(d => d.y).y(d => d.x))
-      .style("opacity", 1);
+    .data(root.links(), d => `${d.source.id}-${d.target.id}`); // Unique key
 
-  links.each(function() {
-    const totalLength = this.getTotalLength();
-    d3.select(this)
-      .attr("stroke-dasharray", totalLength + " " + totalLength)
-      .attr("stroke-dashoffset", totalLength)
-      .transition()
-        .duration(2000)
-        .attr("stroke-dashoffset", 0);
-  });
+  links.exit()
+    .transition().duration(1000)
+    .style("opacity", 0)
+    .remove();
 
-  // Draw Nodes with Animation.
-  const nodeGroup = svg.selectAll(".node")
-    .data(root.descendants())
-    .enter().append("g")
-      .attr("class", "node")
-      .attr("transform", d => `translate(${d.y},${d.x})`);
+  const enterLinks = links.enter()
+    .append("path")
+    .attr("class", "link")
+    .style("opacity", 0)
+    .attr("d", d3.linkHorizontal()
+      .x(d => d.y)
+      .y(d => d.x));
 
-  nodeGroup.append("circle")
+  enterLinks.merge(links)
+    .transition().duration(1000)
+    .style("opacity", 1)
+    .attr("d", d3.linkHorizontal()
+      .x(d => d.y)
+      .y(d => d.x));
+
+  // Process nodes
+  const nodes = svg.selectAll(".node")
+    .data(root.descendants(), d => d.id);
+
+  nodes.exit()
+    .transition().duration(1000)
+    .style("opacity", 0)
+    .remove();
+
+  const enterNodes = nodes.enter()
+    .append("g")
+    .attr("class", "node")
+    .attr("transform", d => `translate(${d.y},${d.x})`)
+    .style("opacity", 0);
+
+  enterNodes.append("circle")
     .attr("r", 0)
-    .style("fill", d => d.data.collapsed ? "#ff7f0e" : "#fff")
-    .transition()
-      .duration(1000)
-      .attr("r", 10);
-      
-  nodeGroup.append("text")
+    .style("fill", d => d.data.collapsed ? "#ff7f0e" : "#fff");
+
+  enterNodes.append("text")
     .attr("dy", "0.31em")
     .attr("x", d => d.children ? -13 : 13)
     .style("text-anchor", d => d.children ? "end" : "start")
-    .text(d => `${d.data.type}: ${d.data.text}`)
-    .style("opacity", 0)
-    .transition()
-      .duration(1000)
-      .style("opacity", 1);
+    .text(d => `${d.data.type}: ${d.data.text}`);
+
+  const mergedNodes = enterNodes.merge(nodes);
+
+  mergedNodes.transition().duration(1000)
+    .style("opacity", 1)
+    .attr("transform", d => `translate(${d.y},${d.x})`);
+
+  mergedNodes.select("circle")
+    .transition().duration(1000)
+    .attr("r", 10)
+    .style("fill", d => d.data.collapsed ? "#ff7f0e" : "#fff");
+
+  mergedNodes.select("text")
+    .text(d => `${d.data.type}: ${d.data.text}`);
 };
 
 // ==============================
