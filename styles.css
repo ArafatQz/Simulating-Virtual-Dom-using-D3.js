@@ -27,6 +27,8 @@ body {
     fill: none;
     stroke: #ccc;
     stroke-width: 1.5px;
+    stroke-width: 1.5px;
+    transition: stroke 1s ease, stroke-width 1s ease;
   }
   .node.collapsed circle {
     fill: #ff7f0e;
@@ -69,10 +71,7 @@ body {
   .context-menu button:hover {
     background-color: #f8f9fa;
   }
-  
-  .link {
-    fill: none;
-    stroke: #ccc;
-    stroke-width: 1.5px;
-    transition: stroke 0.3s ease, stroke-width 0.3s ease;
+  text{
+    transform: translate(-40px, 20px);
   }
+

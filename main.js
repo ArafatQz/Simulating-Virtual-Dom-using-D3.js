@@ -33,7 +33,7 @@ const clone = obj => {
   else if (obj instanceof Object) {
     const copy = {};
     for (let key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      if (obj.hasOwnProperty(key)) {
         copy[key] = clone(obj[key]);
       }
     }
@@ -279,8 +279,8 @@ const renderDOM = (node, parent) => {
 // Tree Visualization Setup (Animated)
 // ==============================
 const margin = { top: 20, right: 90, bottom: 30, left: 90 };
-const width = 600 - margin.left - margin.right;
-const height = 500 - margin.top - margin.bottom;
+const width = 600;
+const height = 500;
 
 const svgContainer = d3.select("#chart")
   .append("svg")
@@ -295,50 +295,6 @@ const treeLayout = d3.tree().size([height, width]);
 const updateTree = () => {
   const root = d3.hierarchy(vDOM, d => d.collapsed ? [] : d.children);
   treeLayout(root);
-
-  // ------------------------------
-  // Nodes Section
-  // ------------------------------
-  const nodes = svg.selectAll(".node")
-    .data(root.descendants(), d => d.data.id);
-
-  nodes.exit().remove();
-
-  const enterNodes = nodes.enter()
-    .append("g")
-    .attr("class", "node")
-    .attr("transform", d => `translate(${d.y},${d.x})`)
-    .on('click', function(event, d) {
-      event.stopPropagation();
-      selectedNodeId = d.data.id;
-      showContextMenu(event);
-      d3.selectAll('.node.selected').classed('selected', false);
-      d3.select(this).classed('selected', true);
-    });
-
-  enterNodes.append("circle")
-    .attr("r", 10)
-    .style("fill", d => d.data.collapsed ? "#ff7f0e" : "#ffff")
-    .style("stroke", "#3182bd");
-
-  enterNodes.append("text")
-    .attr("dy", "0.31em")
-    .attr("x", d => d.children ? -13 : 13)
-    .style("text-anchor", d => d.children ? "end" : "start")
-    .text(d => d.data.text || `Node ${d.data.id}`);
-
-  const mergedNodes = nodes.merge(enterNodes);
-
-  // Update text for existing nodes
-  mergedNodes.select("text")
-    .text(d => d.data.text || `Node ${d.data.id}`);
-
-  mergedNodes.transition().duration(500)
-    .attr("transform", d => `translate(${d.y},${d.x})`);
-
-  mergedNodes.select("circle")
-    .transition().duration(500)
-    .style("fill", d => d.data.collapsed ? "#ff7f0e" : "#fff");
 
   // ------------------------------
   // Links Section with Animation
@@ -368,6 +324,53 @@ const updateTree = () => {
     .attr("d", d3.linkHorizontal()
       .x(d => d.y)
       .y(d => d.x));
+      
+  // ------------------------------
+  // Nodes Section
+  // ------------------------------
+  const nodes = svg.selectAll(".node")
+    .data(root.descendants(), d => d.data.id);
+
+  nodes.exit().remove();
+
+  const enterNodes = nodes.enter()
+    .append("g")
+    .attr("class", "node")
+    .attr("transform", d => `translate(${d.y},${d.x})`)
+    .on('click', function(event, d) {
+      event.stopPropagation();
+      selectedNodeId = d.data.id;
+      showContextMenu(event);
+      d3.selectAll('.node.selected').classed('selected', false);
+      d3.select(this).classed('selected', true);
+    });
+
+  enterNodes.append("circle")
+    .attr("r", 10)
+    .style("fill", d => d.data.collapsed ? "#ff7f0e" : "#ffffff")
+    .style("stroke", "#3182bd")
+    .style('z-index', 1)
+
+  enterNodes.append("text")
+    .attr("dy", "0.31em")
+    .attr("x", d => d.children ? -13 : 13)
+    .style("text-anchor", d => d.children ? "end" : "start")
+    .text(d => d.data.text || `Node ${d.data.id}`);
+
+  const mergedNodes = nodes.merge(enterNodes);
+
+  // Update text for existing nodes
+  mergedNodes.select("text")
+    .text(d => d.data.text || `Node ${d.data.id}`);
+
+  mergedNodes.transition().duration(500)
+    .attr("transform", d => `translate(${d.y},${d.x})`);
+
+  mergedNodes.select("circle")
+    .transition().duration(500)
+    .style("fill", d => d.data.collapsed ? "#ff7f0e" : "#3182bd");
+
+  
 };
 
 function showContextMenu(event) {
@@ -501,7 +504,7 @@ const removeTask = id => {
   refreshDOM();
 };
 
-// Instead of fully re-rendering the DOM from scratch,
+
 // refreshDOM diffs the previous and current vDOM and applies patches.
 const refreshDOM = () => {
   const patches = diff(prevVDOM, vDOM);
