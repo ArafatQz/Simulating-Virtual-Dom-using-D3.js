@@ -27,31 +27,37 @@ const renderDOM = (node, parent) => {
         }
     });
     
-    // For list items add Edit and Remove buttons
     if (node.type === 'li') {
+      // Add flex container styling to list item
+      element.classed('d-flex align-items-center justify-content-between', true);
+      
+      // Create a container for the buttons
+      const buttonGroup = element.append('div')
+        .classed('btn-group me-2', true);
+    
       if (element.select('button.edit').empty()) {
-        element.append('button')
-          .classed('btn btn-secondary btn-sm ms-2 edit', true)
+        buttonGroup.append('button')
+          .classed('btn btn-secondary btn-sm edit', true)
           .text('Edit')
           .on('click', event => {
             event.stopPropagation();
-            // Look up the current node in vDOM using the stored selectedNodeId.
             const currentNode = findNodeById(vDOM, node.id);
-            if (currentNode) {
-              editTask(node.id);
-            }
+            if (currentNode) editTask(node.id);
           });
-          
       }
+    
       if (element.select('button.remove').empty()) {
-        element.append('button')
-          .classed('btn btn-danger btn-sm ms-2 remove', true)
+        buttonGroup.append('button')
+          .classed('btn btn-danger btn-sm remove', true)
           .text('×')
           .on('click', event => {
             event.stopPropagation();
             removeTask(node.id);
           });
       }
+    
+      // Move the text to a separate span and push it to the right
+ 
     }
     
     // Recursively render children.

@@ -74,4 +74,26 @@ body {
   text{
     transform: translate(-40px, 20px);
   }
-
+li {
+    width: 100%;
+    list-style: none;
+    padding: 5px 10px;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow: hidden;
+  }
+  li:last-child {
+    border-bottom: none;
+  }
+  li button {
+    width: 50px;
+    background-color: transparent;
+    border: none;
+    text-align: right;
+    cursor: pointer;
+    
+    
+  }
