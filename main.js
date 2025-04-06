@@ -284,7 +284,7 @@ const height = 500;
 
 const svgContainer = d3.select("#chart")
   .append("svg")
-  .attr("width", width + margin.left + margin.right)
+  .attr("width", "100%")
   .attr("height", height + margin.top + margin.bottom);
 
 const svg = svgContainer.append("g")
@@ -324,7 +324,7 @@ const updateTree = () => {
     .attr("d", d3.linkHorizontal()
       .x(d => d.y)
       .y(d => d.x));
-      
+
   // ------------------------------
   // Nodes Section
   // ------------------------------

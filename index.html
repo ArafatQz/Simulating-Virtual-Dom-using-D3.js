@@ -8,7 +8,6 @@
   <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-  <!-- Todo List Container -->
   <div class="container">
     <h2 class="text-center mb-4">Todo List</h2>
     <div class="input-group mb-3">
@@ -19,7 +18,6 @@
     <div id="app" class="list-group"></div>
   </div>
 
-  <!-- Virtual DOM Representation Tree Container -->
   <div class="container">
     <h2 class="text-center mb-4">Virtual DOM Tree</h2>
     <div id="chart"></div>
@@ -31,6 +29,15 @@
     <button onclick="handleCreateChild()">Create Child</button>
     <button onclick="handleToggle()">Toggle Children</button>
   </div>
-  <script src="main.js"></script>
+
+  <!-- Load JavaScript files -->
+  <script src="js/utils.js"></script>
+  <script src="js/virtual-dom.js"></script>
+  <script src="js/diff-patch.js"></script>
+  <script src="js/render-dom.js"></script>
+  <script src="js/tree-visualization.js"></script>
+  <script src="js/context-menu.js"></script>
+  <script src="js/todo-functions.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
